@@ -32,7 +32,7 @@ addToFinalCommand () {
 	# replace path to get targetFolder
 	fileTargetFolder=$(sed "s|$inputFolder|$outputFolder|" <<< $folderToOrig)
 
-    if [ "$fext" == "mov" ] || [ "$fext" == "mkv" ] || [ "$fext" == "mp4" ] || [ "$fext" == "avi" ] || [ "$fext" == "gif" ]; then
+    if [ "$fext" == "mov" ] || [ "$fext" == "mkv" ] || [ "$fext" == "mp4" ] || [ "$fext" == "avi" ] || [ "$fext" == "gif" ] || [ "$fext" == "webm" ]; then
     	#-------------------------------------#
     	# IF IT IS A MOVIE/GIF --> CONVERT IT #
     	#-------------------------------------#
