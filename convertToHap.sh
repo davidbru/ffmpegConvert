@@ -3,6 +3,9 @@
 # Convert files with ffmpeg in user specified folder
 #   Creates a "converted" folder in the specified folder with the converted files
 
+# Forces a maximum video width of 1920
+# Forces a frame rate of 30
+
 # Requirements
 #   ffmpeg needs to be present in PathVar
 #   Current location: /usr/local/bin/ffmpeg
@@ -40,7 +43,7 @@ addToFinalCommand() {
     # escape special characters
     printf -v fileTarget "%q" "$fileTargetFolder/$fnameWithoutExt.mov"
 
-    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v hap -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/4)*4:trunc(ih/4)*4\" -b:v 12M $fileTarget; "
+    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v hap -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/4)*4:trunc(ih/4)*4\" -filter:v fps=30 -b:v 12M $fileTarget; "
 
     #----------------#
     # MAKE THUMBNAIL #
