@@ -45,6 +45,14 @@ addToFinalCommand() {
 
     finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v hap -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/4)*4:trunc(ih/4)*4, fps=30\" $fileTarget; "
 
+    #----------------------#
+    # MAKE THUMBNAIL MOVIE #
+    #----------------------#
+    mkdir -p "$fileTargetFolder/__thumbs_mov"
+    printf -v fileTargetThumbnailMovie "%q" "$fileTargetFolder/__thumbs_mov/$fnameWithoutExt.mp4"
+
+    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v libx264 -vf \"scale='if(gt(iw,480),480,iw)':'trunc(ow/a/2)*2', fps=30\" -b:v 250k $fileTargetThumbnailMovie; "
+
     #----------------#
     # MAKE THUMBNAIL #
     #----------------#
