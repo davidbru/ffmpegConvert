@@ -43,7 +43,7 @@ addToFinalCommand() {
     # escape special characters
     printf -v fileTarget "%q" "$fileTargetFolder/$fnameWithoutExt.mov"
 
-    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v hap -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/4)*4:trunc(ih/4)*4\" -filter:v fps=30 -b:v 12M $fileTarget; "
+    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v hap -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/4)*4:trunc(ih/4)*4, fps=30\" $fileTarget; "
 
     #----------------#
     # MAKE THUMBNAIL #
@@ -129,5 +129,5 @@ for entry1 in "$inputFolder"/*; do
   fi
 done
 
-#echo $finalCommand
-eval $finalCommand
+echo $finalCommand
+#eval $finalCommand
