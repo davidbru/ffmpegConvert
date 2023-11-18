@@ -137,5 +137,5 @@ for entry1 in "$inputFolder"/*; do
   fi
 done
 
-echo $finalCommand
-#eval $finalCommand
+#echo $finalCommand
+eval $finalCommand
