@@ -11,8 +11,8 @@
 #   Current location: /usr/local/bin/ffmpeg
 
 # Usage
-#   chmod +x ./convertToHap.sh
-#   ./convertToHap.sh
+#   chmod +x ./convertToH264.sh
+#   ./convertToH264.sh
 #       specify /path/to/folder
 
 # ffmpeg -i inputFile.mkv -an -c:v mjpeg -vf "scale='min(1280,iw)':-1" -b:v 12M -ss 00:05:44 -t 00:00:33 outputFile.mov
@@ -43,25 +43,7 @@ addToFinalCommand() {
     # escape special characters
     printf -v fileTarget "%q" "$fileTargetFolder/$fnameWithoutExt.mov"
 
-    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v hap -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/4)*4:trunc(ih/4)*4, fps=30\" $fileTarget; "
-
-    #----------------------#
-    # MAKE THUMBNAIL MOVIE #
-    #----------------------#
-    mkdir -p "$fileTargetFolder/__thumbs_mov"
-    printf -v fileTargetThumbnailMovie "%q" "$fileTargetFolder/__thumbs_mov/$fnameWithoutExt.mp4"
-
-    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v h264_videotoolbox -vf \"scale='if(gt(iw,480),480,iw)':'trunc(ow/a/2)*2', fps=30\" -b:v 250k $fileTargetThumbnailMovie; "
-
-    #----------------#
-    # MAKE THUMBNAIL #
-    #----------------#
-#    mkdir -p "$fileTargetFolder/__thumbs"
-#    printf -v fileTargetThumbnail "%q" "$fileTargetFolder/__thumbs/$fnameWithoutExt.jpg"
-#
-#    durationFull=$(ffmpeg -i $fileTarget 2>&1 | grep Duration | awk '{print $2}' | tr -d ,)
-#    durationHalf=$(echo $durationFull | awk -F ':' '{print ($3+$2*60+$1*3600)/2}' | awk -F ',' '{print ($1)}')
-#    finalCommand="$finalCommand ffmpeg -ss $durationHalf -i $fileTarget -vframes 1 $fileTargetThumbnail; "
+    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v h264_videotoolbox -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/4)*4:trunc(ih/4)*4, fps=30\" -b:v 12000k $fileTarget; "
   else
     #-------------------#
     # ELSE JUST COPY IT #
@@ -85,7 +67,7 @@ if [ "${inputFolder: -1}" = "/" ]; then
 fi
 
 # create "converted" folder
-outputFolder="${inputFolder}_hap"
+outputFolder="${inputFolder}_h264"
 mkdir -p "${outputFolder}"
 
 # go through files in user specified folder and convert them

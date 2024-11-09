@@ -11,8 +11,8 @@
 #   Current location: /usr/local/bin/ffmpeg
 
 # Usage
-#   chmod +x ./convertToHap.sh
-#   ./convertToHap.sh
+#   chmod +x ./convertToDXV.sh
+#   ./convertToDXV.sh
 #       specify /path/to/folder
 
 # ffmpeg -i inputFile.mkv -an -c:v mjpeg -vf "scale='min(1280,iw)':-1" -b:v 12M -ss 00:05:44 -t 00:00:33 outputFile.mov
@@ -43,7 +43,7 @@ addToFinalCommand() {
     # escape special characters
     printf -v fileTarget "%q" "$fileTargetFolder/$fnameWithoutExt.mov"
 
-    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v hap -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/4)*4:trunc(ih/4)*4, fps=30\" $fileTarget; "
+    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v dxv -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/4)*4:trunc(ih/4)*4, fps=30\" $fileTarget; "
 
     #----------------------#
     # MAKE THUMBNAIL MOVIE #
@@ -85,7 +85,7 @@ if [ "${inputFolder: -1}" = "/" ]; then
 fi
 
 # create "converted" folder
-outputFolder="${inputFolder}_hap"
+outputFolder="${inputFolder}_dxv"
 mkdir -p "${outputFolder}"
 
 # go through files in user specified folder and convert them
