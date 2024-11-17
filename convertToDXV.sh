@@ -43,7 +43,7 @@ addToFinalCommand() {
     # escape special characters
     printf -v fileTarget "%q" "$fileTargetFolder/$fnameWithoutExt.mov"
 
-    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v dxv -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/16)*16:trunc(ih/16)*16,fps=30\" -pix_fmt yuva422p -r 30 $fileTarget; "
+    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v dxv -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/16)*16:trunc(ih/16)*16,fps=30\" -r 30 $fileTarget; "
 
     #----------------------#
     # MAKE THUMBNAIL MOVIE #
