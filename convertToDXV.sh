@@ -52,16 +52,6 @@ addToFinalCommand() {
     printf -v fileTargetThumbnailMovie "%q" "$fileTargetFolder/__thumbs_mov/$fnameWithoutExt.mp4"
 
     finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v h264_videotoolbox -vf \"scale='if(gt(iw,480),480,iw)':'trunc(ow/a/2)*2', fps=30\" -b:v 250k $fileTargetThumbnailMovie; "
-
-    #----------------#
-    # MAKE THUMBNAIL #
-    #----------------#
-#    mkdir -p "$fileTargetFolder/__thumbs"
-#    printf -v fileTargetThumbnail "%q" "$fileTargetFolder/__thumbs/$fnameWithoutExt.jpg"
-#
-#    durationFull=$(ffmpeg -i $fileTarget 2>&1 | grep Duration | awk '{print $2}' | tr -d ,)
-#    durationHalf=$(echo $durationFull | awk -F ':' '{print ($3+$2*60+$1*3600)/2}' | awk -F ',' '{print ($1)}')
-#    finalCommand="$finalCommand ffmpeg -ss $durationHalf -i $fileTarget -vframes 1 $fileTargetThumbnail; "
   else
     #-------------------#
     # ELSE JUST COPY IT #
