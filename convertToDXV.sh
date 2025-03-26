@@ -1,23 +1,5 @@
 #!/bin/bash
 
-# Convert files with ffmpeg in user specified folder
-#   Creates a "converted" folder in the specified folder with the converted files
-
-# Forces a maximum video width of 1920
-# Forces a frame rate of 30
-
-# Requirements
-#   ffmpeg needs to be present in PathVar
-#   Current location: /usr/local/bin/ffmpeg
-
-# Usage
-#   chmod +x ./convertToDXV.sh
-#   ./convertToDXV.sh
-#       specify /path/to/folder
-
-# ffmpeg -i inputFile.mkv -an -c:v mjpeg -vf "scale='min(1280,iw)':-1" -b:v 12M -ss 00:05:44 -t 00:00:33 outputFile.mov
-# ffmpeg -i inputFile.mkv -an -c:v hap -vf "scale='min(1280,iw)':-1" -b:v 12M -ss 00:05:44 -t 00:00:33 outputFile.mov
-
 finalCommand=""
 
 addToFinalCommand() {
@@ -64,68 +46,27 @@ addToFinalCommand() {
   fi
 }
 
-# catch trailing slash from userinput
-read -p "Pfad zum zu konvertierenden Ordner: [/Users/david/Desktop/vj_test/ToConvert]
-" inputFolder
-if [ ! "$inputFolder" ]; then
-  inputFolder="/Users/david/Desktop/vj_test/ToConvert"
-fi
-if [ "${inputFolder: -1}" = "/" ]; then
-  inputFolder="${inputFolder%?}"
-fi
+# Catch trailing slash from user input
+read -p "Pfad zum zu konvertierenden Ordner: [/Users/david/Desktop/vj_test/ToConvert] " inputFolder
+inputFolder=${inputFolder:-"/Users/david/Desktop/vj_test/ToConvert"}
+inputFolder="${inputFolder%/}"  # Remove trailing slash if present
 
-# create "converted" folder
+echo "$inputFolder"
+# Create "converted" folder
 outputFolder="${inputFolder}_dxv"
-mkdir -p "${outputFolder}"
+mkdir -p "$outputFolder"
 
-# go through files in user specified folder and convert them
-for entry1 in "$inputFolder"/*; do
-  if [ -f "$entry1" ]; then
-    addToFinalCommand "$entry1"
-  else
-    echo "folder $entry1"
-
-    tmpFolder="${entry1}"
-    tmpFolder=${tmpFolder/$inputFolder/$outputFolder}
-
-    mkdir -p "${tmpFolder}"
-
-    for entry2 in "$entry1"/*; do
-      if [ -f "$entry2" ]; then
-        addToFinalCommand "$entry2"
-      else
-        echo "folder $entry2"
-
-        tmpFolder="${entry2}"
-        tmpFolder=${tmpFolder/$inputFolder/$outputFolder}
-
-        mkdir -p "${tmpFolder}"
-
-        for entry3 in "$entry2"/*; do
-          if [ -f "$entry3" ]; then
-            addToFinalCommand "$entry3"
-          else
-            echo "folder $entry3"
-
-            tmpFolder="${entry3}"
-            tmpFolder=${tmpFolder/$inputFolder/$outputFolder}
-
-            mkdir -p "${tmpFolder}"
-
-            for entry4 in "$entry3"/*; do
-              if [ -f "$entry4" ]; then
-                addToFinalCommand "$entry4"
-              else
-                echo "folder $entry4"
-              fi
-            done
-
-          fi
-        done
-      fi
-    done
-  fi
+# Process directories first to ensure structure
+find "$inputFolder" -type d | while read -r dir; do
+  targetDir="${dir/$inputFolder/$outputFolder}"
+  echo "folder $dir"
+  mkdir -p "$targetDir"
 done
 
-#echo $finalCommand
-eval $finalCommand
+# Process files
+while IFS= read -r -d '' file; do
+  addToFinalCommand "$file"
+done < <(find "$inputFolder" -type f -print0)
+
+#echo "$finalCommand"
+eval "$finalCommand"
