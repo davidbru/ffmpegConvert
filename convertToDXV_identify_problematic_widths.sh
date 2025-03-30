@@ -1,5 +1,15 @@
 #!/bin/bash
 
+clearAllTagsFromInputFolder() {
+  echo "Removing all tags from files and directories in: $inputFolder"
+
+  # Remove tags from all files
+  find "$inputFolder" -type f -print0 | xargs -0 tag -r '*' 2>/dev/null
+
+  # Remove tags from all directories
+  find "$inputFolder" -type d -print0 | xargs -0 tag -r '*' 2>/dev/null
+}
+
 checkWidth() {
   local width="$1"
   local fspec="$2"
@@ -70,6 +80,8 @@ read -p "Pfad zum zu konvertierenden Ordner: [/Users/david/Desktop/vj_test/ToCon
 inputFolder=${inputFolder:-"/Users/david/Desktop/vj_test/ToConvert"}
 inputFolder="${inputFolder%/}"  # Remove trailing slash if present
 stopFolder=$(basename "$inputFolder")  # Define the stopping folder
+
+clearAllTagsFromInputFolder
 
 # Process files
 while IFS= read -r -d '' file; do
