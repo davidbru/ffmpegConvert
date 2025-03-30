@@ -18,12 +18,12 @@ checkWidth() {
   local remainder=$(( width % 16 ))
 
   # Check if the remainder is 0 (multiple of 16) or 8
-  if [[ "$remainder" -eq 0 || "$remainder" -eq 8 ]]; then
-    echo "$width: works"
-  else
-    echo "$width: does NOT work"
-    tag -a "Red" "$fspec"
-    tagUpstream "$fspec" "Orange"
+  if [[ "$remainder" -ne 0 && "$remainder" -ne 8 ]]; then
+#      echo "$width: does NOT work"
+      tag -a "Red" "$fspec"
+      tagUpstream "$fspec" "Orange"
+#  else
+#      echo "$width: works"
   fi
 }
 
@@ -37,12 +37,12 @@ tagUpstream() {
     local folderName=$(basename "$filePath")
 
     if [[ "$folderName" == "$stopFolder" ]]; then
-      echo "Stopping at: $filePath"
+#      echo "Stopping at: $filePath"
       break
     fi
 
     if [[ -d "$filePath" ]]; then
-      echo "Tagging: $filePath with $tagName"
+#      echo "Tagging: $filePath with $tagName"
       tag -a "$tagName" "$filePath"
     fi
 
@@ -50,10 +50,10 @@ tagUpstream() {
   done
 }
 
-addToFinalCommand() {
+processFile() {
   local fspec="$1"
 
-  echo "Processing: $fspec"
+#  echo "Processing: $fspec"
   local fnameWithExt=$(basename "$fspec")
   local fext="${fnameWithExt##*.}"
 
@@ -85,6 +85,6 @@ clearAllTagsFromInputFolder
 
 # Process files
 while IFS= read -r -d '' file; do
-  addToFinalCommand "$file"
+  processFile "$file"
 done < <(find "$inputFolder" -type f -print0)
 
