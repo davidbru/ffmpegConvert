@@ -18,12 +18,12 @@ checkWidth() {
   local remainder=$(( width % 16 ))
 
   # Check if the remainder is 0 (multiple of 16) or 8
-  if [[ "$remainder" -ne 0 && "$remainder" -ne 8 ]]; then
-#      echo "$width: does NOT work"
+  if [[ "$remainder" -ne 0 ]]; then
+      echo "$fspec - $width: does NOT work"
       tag -a "Red" "$fspec"
       tagUpstream "$fspec" "Orange"
 #  else
-#      echo "$width: works"
+#      echo "$fspec - $width: works"
   fi
 }
 
@@ -61,17 +61,24 @@ processFile() {
   local fileOrig="$fspec"
 
   if [[ "$fext" =~ ^(mov|mkv|mp4|avi|webm)$ ]]; then
-    local width
-    width=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$fileOrig" 2>/dev/null)
+    local codec width
+    codec=$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of csv=p=0 "$fileOrig" 2>/dev/null)
 
-    # Ensure width is a valid number
-    if [[ "$width" =~ ^[0-9]+$ ]]; then
-      checkWidth "$width" "$fspec"
-    else
-      echo "Error: Unable to retrieve width for $fileOrig"
+    # Check if the codec is DXV
+    if [[ "$codec" == "dxv" ]]; then
+      width=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$fileOrig" 2>/dev/null)
+
+      # Ensure width is a valid number
+      if [[ "$width" =~ ^[0-9]+$ ]]; then
+        checkWidth "$width" "$fspec"
+      else
+        echo "Error: Unable to retrieve width for $fileOrig"
+      fi
+#    else
+#      echo "$fileOrig is not DXV"
     fi
-  else
-    echo "Skipping (not a video file): $fspec"
+#  else
+#    echo "Skipping (not a video file): $fspec"
   fi
 }
 
