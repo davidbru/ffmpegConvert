@@ -17,7 +17,7 @@ checkWidth() {
   # Calculate remainder when width is divided by 16
   local remainder=$(( width % 16 ))
 
-  # Check if the remainder is 0 (multiple of 16) or 8
+  # Check if the remainder is 0 (multiple of 16)
   if [[ "$remainder" -ne 0 ]]; then
       echo "$fspec - $width: does NOT work"
       tag -a "Red" "$fspec"
