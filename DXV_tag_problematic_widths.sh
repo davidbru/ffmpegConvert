@@ -1,5 +1,10 @@
 #!/bin/bash
 
+
+# DXV videos are broken if the width is not dividable through 16
+# check all provided video files (not only DXV), whether they are ok or not
+
+
 clearAllTagsFromInputFolder() {
   echo "Removing all tags from files and directories in: $inputFolder"
 
@@ -60,12 +65,12 @@ processFile() {
   # Preserve original path
   local fileOrig="$fspec"
 
-  if [[ "$fext" =~ ^(mov|mkv|mp4|avi|webm)$ ]]; then
-    local codec width
-    codec=$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of csv=p=0 "$fileOrig" 2>/dev/null)
+  if [[ "$fext" =~ ^(mov|mkv|mp4|avi|webm|gif)$ ]]; then
+#    local codec width
+#    codec=$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of csv=p=0 "$fileOrig" 2>/dev/null)
 
     # Check if the codec is DXV
-    if [[ "$codec" == "dxv" ]]; then
+#    if [[ "$codec" == "dxv" ]]; then
       width=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$fileOrig" 2>/dev/null)
 
       # Ensure width is a valid number
@@ -76,14 +81,14 @@ processFile() {
       fi
 #    else
 #      echo "$fileOrig is not DXV"
-    fi
+#    fi
 #  else
 #    echo "Skipping (not a video file): $fspec"
   fi
 }
 
 # Get input folder
-read -p "Pfad zum zu konvertierenden Ordner: [/Users/david/Desktop/vj_test/ToConvert] " inputFolder
+read -p "Pfad zum zu kontrollierenden Ordner: [/Users/david/Desktop/vj_test/ToConvert] " inputFolder
 inputFolder=${inputFolder:-"/Users/david/Desktop/vj_test/ToConvert"}
 inputFolder="${inputFolder%/}"  # Remove trailing slash if present
 stopFolder=$(basename "$inputFolder")  # Define the stopping folder
