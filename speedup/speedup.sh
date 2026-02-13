@@ -5,13 +5,17 @@ inputFolder=${inputFolder:-"/Users/david/Desktop/vj_test/ToConvert"}
 inputFolder="${inputFolder%/}"  # Remove trailing slash if present
 
 
-outputFolder="../${inputFolder}_Fast"
+outputFolder="${inputFolder}_Fast"
 mkdir -p "$outputFolder"
 
 # Initialize an empty variable to hold all ffmpeg commands
 commands=""
 
-while IFS= read -r filename; do
+# Process all files in the input folder
+for filename in "$inputFolder"/*; do
+  # Get only the filename without the path
+  filename=$(basename "$filename")
+  
   echo "Processing: $filename"
 
   input_path="$inputFolder/$filename"
@@ -29,7 +33,7 @@ while IFS= read -r filename; do
   ffmpeg_cmd="ffmpeg -y -loglevel error -i \"$input_path\" -filter:v \"setpts=PTS/4\" -an -c:v libx264 -preset fast -crf 23 \"$output_path\""
   commands+="$ffmpeg_cmd; "
 
-done < _list.txt
+done
 
 # After collecting all commands, echo them for debugging
 echo "Commands to be executed:"
