@@ -1,5 +1,7 @@
 #!/bin/bash
 
+speedupFactor=6
+
 read -p "Pfad zum Ordner mit den originalen Dateien: [/Users/david/Desktop/vj_test/ToConvert] " inputFolder
 inputFolder=${inputFolder:-"/Users/david/Desktop/vj_test/ToConvert"}
 inputFolder="${inputFolder%/}"  # Remove trailing slash if present
@@ -30,7 +32,7 @@ for filename in "$inputFolder"/*; do
   fi
 
   # Build the ffmpeg command and append it to the `commands` variable
-  ffmpeg_cmd="ffmpeg -y -loglevel error -i \"$input_path\" -filter:v \"setpts=PTS/4\" -an -c:v libx264 -preset fast -crf 23 \"$output_path\""
+  ffmpeg_cmd="ffmpeg -y -loglevel error -i \"$input_path\" -filter:v \"setpts=PTS/$speedupFactor\" -an -c:v libx264 -preset fast -crf 23 \"$output_path\""
   commands+="$ffmpeg_cmd; "
 
 done
