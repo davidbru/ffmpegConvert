@@ -29,6 +29,15 @@ addToFinalCommand() {
     echo "Skipping $fspec: could not read dimensions" >&2
     return
   fi
+  # rotate portrait footage to landscape before letterbox-widening
+  local rotate_filter=""
+  if (( H > W )); then
+    rotate_filter="[0:v]transpose=1[rot];"
+    local tmp=$W
+    W=$H
+    H=$tmp
+  fi
+
   if (( H < 384 )); then
     echo "Skipping $fspec: height ${H}px is less than 384px" >&2
     return
@@ -42,7 +51,11 @@ addToFinalCommand() {
   local crop_y=$(( (H - 384) / 2 ))
 
   # build split filter
-  local filter="[0:v]split=${total}"
+  local split_source="[0:v]"
+  if [[ -n "$rotate_filter" ]]; then
+    split_source="[rot]"
+  fi
+  local filter="${rotate_filter}${split_source}split=${total}"
   for (( i=0; i<total; i++ )); do
     filter="${filter}[s${i}]"
   done
