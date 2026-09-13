@@ -82,7 +82,7 @@ addToFinalCommand() {
   filter="${filter}[wide]crop=${targetWidth}:${targetHeight}:${crop_x}:0[co];"
   filter="${filter}[co]fps=30,setsar=1[out]"
 
-  finalCommand="$finalCommand ffmpeg -i $fileOrig -filter_complex \"${filter}\" -map \"[out]\" -an -c:v prores_ks -profile:v 4 -r 30 $fileTarget; "
+  finalCommand="$finalCommand ffmpeg -i $fileOrig -filter_complex \"${filter}\" -map \"[out]\" -an -c:v dxv -r 30 $fileTarget; "
 }
 
 # Catch trailing slash from user input
