@@ -41,24 +41,25 @@ addToFinalCommand() {
     H=$tmp
   fi
 
-  if (( H < targetHeight )); then
-    echo "Skipping $fspec: height ${H}px is less than ${targetHeight}px" >&2
-    return
+  # scale (no cropping) so the full frame fits targetHeight, then derive
+  # the scaled width to use for the horizontal tiling math
+  local scaledW=$(( (W * targetHeight + H / 2) / H ))
+  local scale_source="[0:v]"
+  if [[ -n "$rotate_filter" ]]; then
+    scale_source="[rot]"
   fi
+  local scale_filter="${scale_source}scale=${scaledW}:${targetHeight}[scaled];"
+  W=$scaledW
+  H=$targetHeight
 
   # ceil(targetWidth / W) copies per side
   local n_per_side=$(( (targetWidth + W - 1) / W ))
   local total=$(( 2 * n_per_side + 1 ))
   local strip_width=$(( W * total ))
   local crop_x=$(( (strip_width - targetWidth) / 2 ))
-  local crop_y=$(( (H - targetHeight) / 2 ))
 
   # build split filter
-  local split_source="[0:v]"
-  if [[ -n "$rotate_filter" ]]; then
-    split_source="[rot]"
-  fi
-  local filter="${rotate_filter}${split_source}split=${total}"
+  local filter="${rotate_filter}${scale_filter}[scaled]split=${total}"
   for (( i=0; i<total; i++ )); do
     filter="${filter}[s${i}]"
   done
@@ -76,13 +77,12 @@ addToFinalCommand() {
     fi
   done
 
-  # hstack → crop width → crop height → setsar → fps
+  # hstack → crop width to exact target → setsar → fps
   filter="${filter}${stack_inputs}hstack=inputs=${total}[wide];"
-  filter="${filter}[wide]crop=${targetWidth}:${H}:${crop_x}:0[cw];"
-  filter="${filter}[cw]crop=${targetWidth}:${targetHeight}:0:${crop_y}[co];"
+  filter="${filter}[wide]crop=${targetWidth}:${targetHeight}:${crop_x}:0[co];"
   filter="${filter}[co]fps=30,setsar=1[out]"
 
-  finalCommand="$finalCommand ffmpeg -i $fileOrig -filter_complex \"${filter}\" -map \"[out]\" -an -c:v dxv -r 30 $fileTarget; "
+  finalCommand="$finalCommand ffmpeg -i $fileOrig -filter_complex \"${filter}\" -map \"[out]\" -an -c:v prores_ks -profile:v 4 -r 30 $fileTarget; "
 }
 
 # Catch trailing slash from user input
