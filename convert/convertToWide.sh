@@ -1,5 +1,8 @@
 #!/bin/bash
 
+targetWidth=11392
+targetHeight=512
+
 finalCommand=""
 
 addToFinalCommand() {
@@ -38,17 +41,17 @@ addToFinalCommand() {
     H=$tmp
   fi
 
-  if (( H < 512 )); then
-    echo "Skipping $fspec: height ${H}px is less than 512px" >&2
+  if (( H < targetHeight )); then
+    echo "Skipping $fspec: height ${H}px is less than ${targetHeight}px" >&2
     return
   fi
 
-  # ceil(11392 / W) copies per side
-  local n_per_side=$(( (11392 + W - 1) / W ))
+  # ceil(targetWidth / W) copies per side
+  local n_per_side=$(( (targetWidth + W - 1) / W ))
   local total=$(( 2 * n_per_side + 1 ))
   local strip_width=$(( W * total ))
-  local crop_x=$(( (strip_width - 11392) / 2 ))
-  local crop_y=$(( (H - 512) / 2 ))
+  local crop_x=$(( (strip_width - targetWidth) / 2 ))
+  local crop_y=$(( (H - targetHeight) / 2 ))
 
   # build split filter
   local split_source="[0:v]"
@@ -75,8 +78,8 @@ addToFinalCommand() {
 
   # hstack → crop width → crop height → setsar → fps
   filter="${filter}${stack_inputs}hstack=inputs=${total}[wide];"
-  filter="${filter}[wide]crop=11392:${H}:${crop_x}:0[cw];"
-  filter="${filter}[cw]crop=11392:512:0:${crop_y}[co];"
+  filter="${filter}[wide]crop=${targetWidth}:${H}:${crop_x}:0[cw];"
+  filter="${filter}[cw]crop=${targetWidth}:${targetHeight}:0:${crop_y}[co];"
   filter="${filter}[co]fps=30,setsar=1[out]"
 
   finalCommand="$finalCommand ffmpeg -i $fileOrig -filter_complex \"${filter}\" -map \"[out]\" -an -c:v dxv -r 30 $fileTarget; "
