@@ -88,7 +88,7 @@ mkdir -p "$outputFolder"
 
 # Process directories first to ensure structure
 find "$inputFolder" -type d | while read -r dir; do
-  targetDir="${dir/$inputFolder/$outputFolder}"
+  targetDir="${outputFolder}${dir:${#inputFolder}}"
   echo "folder $dir"
   mkdir -p "$targetDir"
 done

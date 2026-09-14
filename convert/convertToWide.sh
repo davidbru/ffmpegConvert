@@ -121,7 +121,7 @@ mkdir -p "$outputFolder"
 
 # Process directories first to ensure structure
 while IFS= read -r dir; do
-  targetDir="${dir/$inputFolder/$outputFolder}"
+  targetDir="${outputFolder}${dir:${#inputFolder}}"
   mkdir -p "$targetDir"
 done < <(find "$inputFolder" -type d)
 
