@@ -88,8 +88,15 @@ processFile() {
 }
 
 # Get input folder
-read -p "Pfad zum zu kontrollierenden Ordner: [/Users/david/Desktop/vj_test/ToConvert] " inputFolder
-inputFolder=${inputFolder:-"/Users/david/Desktop/vj_test/ToConvert"}
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  read -rp "Pfad zum zu kontrollierenden Ordner: [/Users/david/Desktop/vj_test/ToConvert] " inputFolder
+  inputFolder=${inputFolder:-"/Users/david/Desktop/vj_test/ToConvert"}
+else
+  read -rp "Pfad zum zu kontrollierenden Ordner: " inputFolder
+fi
+while [[ -z "$inputFolder" ]]; do
+  read -rp "Pfad zum zu kontrollierenden Ordner: " inputFolder
+done
 inputFolder="${inputFolder%/}"  # Remove trailing slash if present
 stopFolder=$(basename "$inputFolder")  # Define the stopping folder
 

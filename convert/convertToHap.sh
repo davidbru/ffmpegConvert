@@ -18,6 +18,14 @@
 # ffmpeg -i inputFile.mkv -an -c:v mjpeg -vf "scale='min(1280,iw)':-1" -b:v 12M -ss 00:05:44 -t 00:00:33 outputFile.mov
 # ffmpeg -i inputFile.mkv -an -c:v hap -vf "scale='min(1280,iw)':-1" -b:v 12M -ss 00:05:44 -t 00:00:33 outputFile.mov
 
+# h264_videotoolbox is macOS hardware encoding and doesn't exist on Windows;
+# fall back to the software x264 encoder there.
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  thumbCodec="h264_videotoolbox"
+else
+  thumbCodec="libx264"
+fi
+
 finalCommand=""
 
 addToFinalCommand() {
@@ -33,7 +41,7 @@ addToFinalCommand() {
   printf -v fileOrig "%q" "$fspec"
 
   # replace path to get targetFolder
-  fileTargetFolder=$(sed "s|$inputFolder|$outputFolder|" <<<$folderToOrig)
+  fileTargetFolder="${outputFolder}${folderToOrig:${#inputFolder}}"
 
   if [ "$fext" == "mov" ] || [ "$fext" == "mkv" ] || [ "$fext" == "mp4" ] || [ "$fext" == "avi" ] || [ "$fext" == "gif" ] || [ "$fext" == "webm" ]; then
     #-------------------------------------#
@@ -51,7 +59,7 @@ addToFinalCommand() {
     mkdir -p "$fileTargetFolder/__thumbs_mov"
     printf -v fileTargetThumbnailMovie "%q" "$fileTargetFolder/__thumbs_mov/$fnameWithoutExt.mp4"
 
-    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v h264_videotoolbox -vf \"scale='if(gt(iw,480),480,iw)':'trunc(ow/a/2)*2', fps=30\" -b:v 250k $fileTargetThumbnailMovie; "
+    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v $thumbCodec -vf \"scale='if(gt(iw,480),480,iw)':'trunc(ow/a/2)*2', fps=30\" -b:v 250k $fileTargetThumbnailMovie; "
   else
     #-------------------#
     # ELSE JUST COPY IT #
@@ -65,8 +73,15 @@ addToFinalCommand() {
 }
 
 # Catch trailing slash from user input
-read -p "Pfad zum zu konvertierenden Ordner: [/Users/david/Desktop/vj_test/ToConvert] " inputFolder
-inputFolder=${inputFolder:-"/Users/david/Desktop/vj_test/ToConvert"}
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  read -rp "Pfad zum zu konvertierenden Ordner: [/Users/david/Desktop/vj_test/ToConvert] " inputFolder
+  inputFolder=${inputFolder:-"/Users/david/Desktop/vj_test/ToConvert"}
+else
+  read -rp "Pfad zum zu konvertierenden Ordner: " inputFolder
+fi
+while [[ -z "$inputFolder" ]]; do
+  read -rp "Pfad zum zu konvertierenden Ordner: " inputFolder
+done
 inputFolder="${inputFolder%/}"  # Remove trailing slash if present
 
 echo "$inputFolder"

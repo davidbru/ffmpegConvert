@@ -33,7 +33,7 @@ addToFinalCommand() {
   printf -v fileOrig "%q" "$fspec"
 
   # replace path to get targetFolder
-  fileTargetFolder=$(sed "s|$inputFolder|$outputFolder|" <<<$folderToOrig)
+  fileTargetFolder="${outputFolder}${folderToOrig:${#inputFolder}}"
 
   if [ "$fext" == "mov" ] || [ "$fext" == "mkv" ] || [ "$fext" == "mp4" ] || [ "$fext" == "avi" ] || [ "$fext" == "gif" ] || [ "$fext" == "webm" ]; then
     #-------------------------------------#
@@ -57,8 +57,15 @@ addToFinalCommand() {
 }
 
 # Catch trailing slash from user input
-read -p "Pfad zum zu konvertierenden Ordner: [/Users/david/Desktop/vj_test/ToConvert] " inputFolder
-inputFolder=${inputFolder:-"/Users/david/Desktop/vj_test/ToConvert"}
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  read -rp "Pfad zum zu konvertierenden Ordner: [/Users/david/Desktop/vj_test/ToConvert] " inputFolder
+  inputFolder=${inputFolder:-"/Users/david/Desktop/vj_test/ToConvert"}
+else
+  read -rp "Pfad zum zu konvertierenden Ordner: " inputFolder
+fi
+while [[ -z "$inputFolder" ]]; do
+  read -rp "Pfad zum zu konvertierenden Ordner: " inputFolder
+done
 inputFolder="${inputFolder%/}"  # Remove trailing slash if present
 
 echo "$inputFolder"

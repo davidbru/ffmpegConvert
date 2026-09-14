@@ -19,7 +19,7 @@ addToFinalCommand() {
 
   # replace path to get targetFolder
   local fileTargetFolder
-  fileTargetFolder=$(sed "s|$inputFolder|$outputFolder|" <<<"$folderToOrig")
+  fileTargetFolder="${outputFolder}${folderToOrig:${#inputFolder}}"
   local fileTarget
   printf -v fileTarget "%q" "$fileTargetFolder/$fnameWithoutExt.mov"
 
@@ -86,8 +86,15 @@ addToFinalCommand() {
 }
 
 # Catch trailing slash from user input
-read -p "Pfad zum zu konvertierenden Ordner: [/Users/david/Desktop/vj/_assets/1_dxv] " inputFolder
-inputFolder=${inputFolder:-"/Users/david/Desktop/vj/_assets/1_dxv"}
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  read -rp "Pfad zum zu konvertierenden Ordner: [/Users/david/Desktop/vj/_assets/1_dxv] " inputFolder
+  inputFolder=${inputFolder:-"/Users/david/Desktop/vj/_assets/1_dxv"}
+else
+  read -rp "Pfad zum zu konvertierenden Ordner: " inputFolder
+fi
+while [[ -z "$inputFolder" ]]; do
+  read -rp "Pfad zum zu konvertierenden Ordner: " inputFolder
+done
 inputFolder="${inputFolder%/}"  # Remove trailing slash if present
 
 echo "$inputFolder"
