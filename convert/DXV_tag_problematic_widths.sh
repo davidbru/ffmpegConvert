@@ -72,7 +72,10 @@ processFile() {
 
     # Check if the codec is DXV
 #    if [[ "$codec" == "dxv" ]]; then
-      width=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$fileOrig" 2>/dev/null)
+      # some legacy QuickTime files carry a "track reference"/stream-group
+      # structure that makes ffprobe report the same value twice (once per
+      # section); take only the first line to guard against that
+      width=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$fileOrig" 2>/dev/null | head -n1)
 
       # Ensure width is a valid number
       if [[ "$width" =~ ^[0-9]+$ ]]; then

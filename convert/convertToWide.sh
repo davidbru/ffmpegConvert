@@ -27,8 +27,11 @@ addToFinalCommand() {
 
   # get video dimensions
   local W H
-  W=$(ffprobe -v quiet -select_streams v:0 -show_entries stream=width -of csv=p=0 "$fspec")
-  H=$(ffprobe -v quiet -select_streams v:0 -show_entries stream=height -of csv=p=0 "$fspec")
+  # some legacy QuickTime files carry a "track reference"/stream-group
+  # structure that makes ffprobe report the same value twice (once per
+  # section); take only the first line to guard against that
+  W=$(ffprobe -v quiet -select_streams v:0 -show_entries stream=width -of csv=p=0 "$fspec" | head -n1)
+  H=$(ffprobe -v quiet -select_streams v:0 -show_entries stream=height -of csv=p=0 "$fspec" | head -n1)
 
   if [[ -z "$W" || -z "$H" || ! "$W" =~ ^[0-9]+$ || ! "$H" =~ ^[0-9]+$ ]]; then
     echo "Skipping $fspec: could not read dimensions" >&2
