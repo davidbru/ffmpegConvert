@@ -17,11 +17,14 @@
 # ffmpeg -i inputFile.mkv -an -c:v mjpeg -vf "scale='min(1280,iw)':-1" -b:v 12M -ss 00:05:44 -t 00:00:33 outputFile.mov
 # ffmpeg -i inputFile.mkv -an -c:v hap -vf "scale='min(1280,iw)':-1" -b:v 12M -ss 00:05:44 -t 00:00:33 outputFile.mov
 
-finalCommand=""
 currentFileIndex=0
 totalFiles=0
 
-addToFinalCommand() {
+progress() {
+  printf '\033[1;92m%s\033[0m\n' "$1"
+}
+
+convertFile() {
   currentFileIndex=$((currentFileIndex + 1))
 
   export fspec=$1
@@ -44,8 +47,8 @@ addToFinalCommand() {
     # escape special characters
     printf -v fileTarget "%q" "$fileTargetFolder/$fnameWithoutExt.mov"
 
-    printf -v fnameDisplay "%q" "$fnameWithExt"
-    finalCommand="$finalCommand printf '\n\033[1;92m[%s/%s] Converting: %s\033[0m\n' \"${currentFileIndex}\" \"${totalFiles}\" $fnameDisplay; ffmpeg -i $fileOrig -an -c:v hap -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/4)*4:trunc(ih/4)*4, fps=30\" $fileTarget; "
+    progress "[${currentFileIndex}/${totalFiles}] Converting: ${fnameWithExt}"
+    eval "ffmpeg -i $fileOrig -an -c:v hap -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/4)*4:trunc(ih/4)*4, fps=30\" $fileTarget"
   else
     #-------------------#
     # ELSE JUST COPY IT #
@@ -54,8 +57,8 @@ addToFinalCommand() {
     # escape special characters
     printf -v fileTarget "%q" "$fileTargetFolder/$fnameWithExt"
 
-    printf -v fnameDisplay "%q" "$fnameWithExt"
-    finalCommand="$finalCommand printf '\n\033[1;92m[%s/%s] Copying: %s\033[0m\n' \"${currentFileIndex}\" \"${totalFiles}\" $fnameDisplay; cp $fileOrig $fileTarget; "
+    progress "[${currentFileIndex}/${totalFiles}] Copying: ${fnameWithExt}"
+    eval "cp $fileOrig $fileTarget"
   fi
 }
 
@@ -91,27 +94,36 @@ outputFolder="${inputFolder}_hap"
 mkdir -p "$outputFolder"
 
 # Process directories first to ensure structure
-find "$inputFolder" -type d | while read -r dir; do
+progress "Scanning folder structure..."
+dirCount=0
+while IFS= read -r dir; do
   targetDir="${outputFolder}${dir:${#inputFolder}}"
-  echo "folder $dir"
   mkdir -p "$targetDir"
-done
+  dirCount=$((dirCount + 1))
+  printf '\033[2m  [%d] %s\033[0m\n' "$dirCount" "$dir"
+done < <(find "$inputFolder" -type d)
+progress "Folder structure ready (${dirCount} folder(s))."
 
 # Collect files first (skip __thumbs_mov folders left over from before
 # thumbnail generation moved to createOverview.sh) so we know the total
 # count for progress reporting
+progress "Scanning for files..."
 videoFiles=()
+scanCount=0
 while IFS= read -r -d '' file; do
+  scanCount=$((scanCount + 1))
   videoFiles+=("$file")
+  if (( scanCount % 25 == 0 )); then
+    printf '\033[2m  ...scanned %d files so far\033[0m\n' "$scanCount"
+  fi
 done < <(find "$inputFolder" -type f -print0 | grep -zv "__thumbs_mov")
 
 totalFiles=${#videoFiles[@]}
-for file in "${videoFiles[@]}"; do
-  addToFinalCommand "$file"
-done
+progress "Found ${totalFiles} file(s) to process."
 
-#echo "$finalCommand"
-eval "$finalCommand"
+for file in "${videoFiles[@]}"; do
+  convertFile "$file"
+done
 
 # Build an overview image into the output folder, sourced from the
 # original files -- Hap output can't be previewed in Explorer/Finder,

@@ -5,11 +5,14 @@
 targetWidth=11392
 targetHeight=512
 
-finalCommand=""
 currentFileIndex=0
 totalFiles=0
 
-addToFinalCommand() {
+progress() {
+  printf '\033[1;92m%s\033[0m\n' "$1"
+}
+
+convertFile() {
   local fspec="$1"
   currentFileIndex=$((currentFileIndex + 1))
   local fnameWithExt
@@ -17,6 +20,8 @@ addToFinalCommand() {
   local folderToOrig
   folderToOrig=$(dirname "$fspec")
   local fnameWithoutExt="${fnameWithExt%.*}"
+
+  progress "[${currentFileIndex}/${totalFiles}] Checking: ${fnameWithExt}"
 
   # escape special characters
   local fileOrig
@@ -90,9 +95,8 @@ addToFinalCommand() {
   filter="${filter}[wide]crop=${targetWidth}:${targetHeight}:${crop_x}:0[co];"
   filter="${filter}[co]fps=30,setsar=1[out]"
 
-  local fnameDisplay
-  printf -v fnameDisplay "%q" "$fnameWithExt"
-  finalCommand="$finalCommand printf '\n\033[1;92m[%s/%s] Converting: %s\033[0m\n' \"${currentFileIndex}\" \"${totalFiles}\" $fnameDisplay; ffmpeg -i $fileOrig -filter_complex \"${filter}\" -map \"[out]\" -an -c:v dxv -r 30 $fileTarget; "
+  progress "[${currentFileIndex}/${totalFiles}] Converting: ${fnameWithExt}"
+  eval "ffmpeg -i $fileOrig -filter_complex \"${filter}\" -map \"[out]\" -an -c:v dxv -r 30 $fileTarget"
 }
 
 # Parse --folder argument
@@ -128,29 +132,40 @@ outputFolder="${inputFolder}_wide"
 mkdir -p "$outputFolder"
 
 # Process directories first to ensure structure
+progress "Scanning folder structure..."
+dirCount=0
 while IFS= read -r dir; do
   targetDir="${outputFolder}${dir:${#inputFolder}}"
   mkdir -p "$targetDir"
+  dirCount=$((dirCount + 1))
+  printf '\033[2m  [%d] %s\033[0m\n' "$dirCount" "$dir"
 done < <(find "$inputFolder" -type d)
+progress "Folder structure ready (${dirCount} folder(s))."
 
 # Collect matching video files first so we know the total count for
 # progress reporting
+progress "Scanning for video files..."
 videoFiles=()
+scanCount=0
 while IFS= read -r -d '' file; do
+  scanCount=$((scanCount + 1))
   ext="${file##*.}"
   ext="$(echo "$ext" | tr '[:upper:]' '[:lower:]')"
   if [[ "$ext" == "mov" || "$ext" == "mkv" || "$ext" == "mp4" || \
         "$ext" == "avi" || "$ext" == "gif" || "$ext" == "webm" ]]; then
     videoFiles+=("$file")
   fi
+  if (( scanCount % 25 == 0 )); then
+    printf '\033[2m  ...scanned %d files so far\033[0m\n' "$scanCount"
+  fi
 done < <(find "$inputFolder" -type f -print0 | grep -zv "__thumbs_mov")
 
 totalFiles=${#videoFiles[@]}
-for file in "${videoFiles[@]}"; do
-  addToFinalCommand "$file"
-done
+progress "Found ${totalFiles} video file(s) to convert."
 
-eval "$finalCommand"
+for file in "${videoFiles[@]}"; do
+  convertFile "$file"
+done
 
 # Build an overview image into the output folder, sourced from the
 # original files -- DXV output can't be previewed in Explorer/Finder,

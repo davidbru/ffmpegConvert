@@ -34,16 +34,19 @@ inputFolder="${inputFolder%/}"  # Remove trailing slash if present
 outputFolder="${inputFolder}_Fast"
 mkdir -p "$outputFolder"
 
+progress() {
+  printf '\033[1;92m%s\033[0m\n' "$1"
+}
+
 # Collect files first so we know the total count for progress reporting
+progress "Scanning for files..."
 videoFiles=()
 for filename in "$inputFolder"/*; do
   [[ -f "$filename" ]] && videoFiles+=("$filename")
 done
 totalFiles=${#videoFiles[@]}
 currentFileIndex=0
-
-# Initialize an empty variable to hold all ffmpeg commands
-commands=""
+progress "Found ${totalFiles} file(s) to process."
 
 # Process all files in the input folder
 for input_path in "${videoFiles[@]}"; do
@@ -52,19 +55,9 @@ for input_path in "${videoFiles[@]}"; do
 
   output_path="$outputFolder/$filename"
 
-  # Build the ffmpeg command and append it to the `commands` variable
-  printf -v fnameDisplay "%q" "$filename"
-  ffmpeg_cmd="printf '\n\033[1;92m[%s/%s] Converting: %s\033[0m\n' \"${currentFileIndex}\" \"${totalFiles}\" $fnameDisplay; ffmpeg -y -loglevel error -i \"$input_path\" -filter:v \"setpts=PTS/$speedupFactor\" -an -c:v libx264 -preset fast -crf 23 \"$output_path\""
-  commands+="$ffmpeg_cmd; "
-
+  progress "[${currentFileIndex}/${totalFiles}] Converting: ${filename}"
+  ffmpeg -y -loglevel error -i "$input_path" -filter:v "setpts=PTS/$speedupFactor" -an -c:v libx264 -preset fast -crf 23 "$output_path"
 done
-
-# After collecting all commands, echo them for debugging
-echo "Commands to be executed:"
-echo "$commands"
-
-# Execute all the commands
-eval "$commands"
 
 # Build an overview image into the output folder, sourced from the
 # original files.
