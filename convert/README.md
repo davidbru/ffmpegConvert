@@ -64,18 +64,25 @@ ffmpeg -hide_banner -encoders | grep -i hap   # -> hap    Vidvox Hap
 If you ever switch to a different ffmpeg source, re-run this check — not all
 builds include `dxv` (it's a proprietary Resolume codec).
 
-## 3. Thumbnail generation (`h264_videotoolbox` → `libx264` on Windows)
+## 3. Previewing DXV/Hap folders: contact sheets, not per-file thumbnails
 
-`convertToDXV.sh` and `convertToHap.sh` generate a thumbnail `.mov` using a
-hardware encoder. `h264_videotoolbox` is Apple-only hardware acceleration
-and doesn't exist on Windows, so both scripts now auto-detect the OS and use
-`libx264` (software H.264, included in the ffmpeg build above) on Windows
-instead — no manual steps needed, and macOS behavior (`h264_videotoolbox`)
-is unchanged.
+`convertToDXV.sh`, `convertToHap.sh`, and `convertToWide.sh` used to each
+generate a `__thumbs_mov` subfolder with a per-video H.264 preview file.
+That's been removed — instead, use `../contactsheet/createContactSheet.sh`
+to generate one `_contactsheet.jpg` overview image per folder (a grid of
+one frame from each video in it), viewable directly in Explorer/Finder
+without decoding DXV/Hap at all:
+
+```bash
+../contactsheet/createContactSheet.sh --folder /path/to/folder
+```
+
+It recurses the same way the convert scripts do, and writes into a sibling
+`<folder>_contactsheets` directory. See that folder for details.
 
 `createThumbnail.sh` still has macOS-only hardcoded paths (`/Volumes/...`)
-and isn't currently set up to run cross-platform — let me know if that one
-needs the same treatment.
+and predates this change — it generates a single JPEG for one hardcoded
+file and isn't part of the per-folder preview flow above.
 
 ## 4. Running a script
 

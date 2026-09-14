@@ -17,14 +17,6 @@
 # ffmpeg -i inputFile.mkv -an -c:v mjpeg -vf "scale='min(1280,iw)':-1" -b:v 12M -ss 00:05:44 -t 00:00:33 outputFile.mov
 # ffmpeg -i inputFile.mkv -an -c:v hap -vf "scale='min(1280,iw)':-1" -b:v 12M -ss 00:05:44 -t 00:00:33 outputFile.mov
 
-# h264_videotoolbox is macOS hardware encoding and doesn't exist on Windows;
-# fall back to the software x264 encoder there.
-if [[ "$(uname -s)" == "Darwin" ]]; then
-  thumbCodec="h264_videotoolbox"
-else
-  thumbCodec="libx264"
-fi
-
 finalCommand=""
 
 addToFinalCommand() {
@@ -51,14 +43,6 @@ addToFinalCommand() {
     printf -v fileTarget "%q" "$fileTargetFolder/$fnameWithoutExt.mov"
 
     finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v hap -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/4)*4:trunc(ih/4)*4, fps=30\" $fileTarget; "
-
-    #----------------------#
-    # MAKE THUMBNAIL MOVIE #
-    #----------------------#
-    mkdir -p "$fileTargetFolder/__thumbs_mov"
-    printf -v fileTargetThumbnailMovie "%q" "$fileTargetFolder/__thumbs_mov/$fnameWithoutExt.mp4"
-
-    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v $thumbCodec -vf \"scale='if(gt(iw,480),480,iw)':'trunc(ow/a/2)*2', fps=30\" -b:v 250k $fileTargetThumbnailMovie; "
   else
     #-------------------#
     # ELSE JUST COPY IT #
@@ -109,10 +93,16 @@ find "$inputFolder" -type d | while read -r dir; do
   mkdir -p "$targetDir"
 done
 
-# Process files
+# Process files (skip __thumbs_mov folders left over from before thumbnail
+# generation moved to createContactSheet.sh)
 while IFS= read -r -d '' file; do
   addToFinalCommand "$file"
-done < <(find "$inputFolder" -type f -print0)
+done < <(find "$inputFolder" -type f -print0 | grep -zv "__thumbs_mov")
 
 #echo "$finalCommand"
 eval "$finalCommand"
+
+# Refresh the contact sheet for the original folder -- Hap output can't be
+# previewed in Explorer/Finder, so this is the browsable overview instead.
+scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+bash "$scriptDir/../contactsheet/createContactSheet.sh" --folder "$inputFolder"

@@ -67,3 +67,8 @@ echo "$commands"
 
 # Execute all the commands
 eval "$commands"
+
+# Refresh the contact sheet for the original folder -- a single browsable
+# overview image of what's in it.
+scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+bash "$scriptDir/../contactsheet/createContactSheet.sh" --folder "$inputFolder"

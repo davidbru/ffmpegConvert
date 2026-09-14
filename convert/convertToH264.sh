@@ -100,3 +100,8 @@ done < <(find "$inputFolder" -type f -print0)
 
 #echo "$finalCommand"
 eval "$finalCommand"
+
+# Refresh the contact sheet for the original folder -- gives a single
+# browsable overview image alongside the per-file H.264 output.
+scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+bash "$scriptDir/../contactsheet/createContactSheet.sh" --folder "$inputFolder"
