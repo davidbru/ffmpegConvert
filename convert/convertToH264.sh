@@ -17,6 +17,14 @@
 # ffmpeg -i inputFile.mkv -an -c:v mjpeg -vf "scale='min(1280,iw)':-1" -b:v 12M -ss 00:05:44 -t 00:00:33 outputFile.mov
 # ffmpeg -i inputFile.mkv -an -c:v hap -vf "scale='min(1280,iw)':-1" -b:v 12M -ss 00:05:44 -t 00:00:33 outputFile.mov
 
+# h264_videotoolbox is macOS-only hardware encoding; use the NVIDIA hardware
+# encoder on Windows/Linux instead (requires a supported NVIDIA GPU + driver).
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  videoCodec="h264_videotoolbox"
+else
+  videoCodec="h264_nvenc"
+fi
+
 finalCommand=""
 
 addToFinalCommand() {
@@ -42,7 +50,7 @@ addToFinalCommand() {
     # escape special characters
     printf -v fileTarget "%q" "$fileTargetFolder/$fnameWithoutExt.mov"
 
-    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v h264_videotoolbox -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/4)*4:trunc(ih/4)*4, fps=30\" -b:v 12000k $fileTarget; "
+    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v $videoCodec -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/4)*4:trunc(ih/4)*4, fps=30\" -b:v 12000k $fileTarget; "
   else
     #-------------------#
     # ELSE JUST COPY IT #
