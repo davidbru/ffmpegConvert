@@ -94,7 +94,7 @@ find "$inputFolder" -type d | while read -r dir; do
 done
 
 # Process files (skip __thumbs_mov folders left over from before thumbnail
-# generation moved to createContactSheet.sh)
+# generation moved to createOverview.sh)
 while IFS= read -r -d '' file; do
   addToFinalCommand "$file"
 done < <(find "$inputFolder" -type f -print0 | grep -zv "__thumbs_mov")
@@ -102,7 +102,8 @@ done < <(find "$inputFolder" -type f -print0 | grep -zv "__thumbs_mov")
 #echo "$finalCommand"
 eval "$finalCommand"
 
-# Refresh the contact sheet for the original folder -- Hap output can't be
-# previewed in Explorer/Finder, so this is the browsable overview instead.
+# Build an overview image into the output folder, sourced from the
+# original files -- Hap output can't be previewed in Explorer/Finder,
+# so this is the browsable overview instead.
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-bash "$scriptDir/../contactsheet/createContactSheet.sh" --folder "$inputFolder"
+bash "$scriptDir/../overview/createOverview.sh" --folder "$inputFolder" --output "$outputFolder"

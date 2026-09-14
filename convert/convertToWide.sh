@@ -137,7 +137,8 @@ done < <(find "$inputFolder" -type f -print0 | grep -zv "__thumbs_mov")
 
 eval "$finalCommand"
 
-# Refresh the contact sheet for the original folder -- DXV output can't be
-# previewed in Explorer/Finder, so this is the browsable overview instead.
+# Build an overview image into the output folder, sourced from the
+# original files -- DXV output can't be previewed in Explorer/Finder,
+# so this is the browsable overview instead.
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-bash "$scriptDir/../contactsheet/createContactSheet.sh" --folder "$inputFolder"
+bash "$scriptDir/../overview/createOverview.sh" --folder "$inputFolder" --output "$outputFolder"

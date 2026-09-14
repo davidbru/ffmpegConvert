@@ -1,25 +1,36 @@
 #!/bin/bash
 
-# Usage: ./createContactSheet.sh --folder /path/to/folder
+# Usage: ./createOverview.sh --folder /path/to/source [--output /path/to/target]
 #
-# Creates one contact-sheet image (_contactsheet.jpg) per folder,
-# recursively, containing a single representative frame from every video
-# file directly inside that folder. Useful for browsing DXV/Hap-encoded
+# Creates one overview image (_overview.jpg) per folder, recursively,
+# containing a single representative frame from every video file directly
+# inside that folder in --folder. Useful for browsing DXV/Hap-encoded
 # folders in Explorer/Finder, since neither OS can generate native
 # thumbnails for those codecs.
 #
-# Output goes into a sibling "<folder>_contactsheets" directory that
-# mirrors the input folder structure, matching the other convert scripts.
+# Frames are always read from --folder (the original source footage, not a
+# DXV/Hap/wide-tiled conversion of it, which wouldn't be a meaningful
+# preview). Without --output, the image is written directly into that same
+# source folder. With --output, --folder's directory structure is mirrored
+# under --output and the image is written there instead -- so it sits next
+# to the *converted* files it's meant to help you browse, not the
+# originals.
 
 columns=4
 cellWidth=320
 cellHeight=180
 bgColor="black"
+borderWidth=10
+borderColor="white"
+
+tileWidth=$(( cellWidth + 2 * borderWidth ))
+tileHeight=$(( cellHeight + 2 * borderWidth ))
 
 extensions=(mov mkv mp4 avi gif webm)
 
-# Parse --folder argument
+# Parse --folder and --output arguments
 inputFolder=""
+outputFolder=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --folder)
@@ -30,22 +41,28 @@ while [[ $# -gt 0 ]]; do
       inputFolder="${1#*=}"
       shift
       ;;
+    --output)
+      outputFolder="$2"
+      shift 2
+      ;;
+    --output=*)
+      outputFolder="${1#*=}"
+      shift
+      ;;
     *)
       echo "Unknown argument: $1" >&2
-      echo "Usage: $0 --folder /path/to/folder" >&2
+      echo "Usage: $0 --folder /path/to/source [--output /path/to/target]" >&2
       exit 1
       ;;
   esac
 done
 
 if [[ -z "$inputFolder" ]]; then
-  echo "Usage: $0 --folder /path/to/folder" >&2
+  echo "Usage: $0 --folder /path/to/source [--output /path/to/target]" >&2
   exit 1
 fi
 inputFolder="${inputFolder%/}"  # Remove trailing slash if present
-
-outputFolder="${inputFolder}_contactsheets"
-mkdir -p "$outputFolder"
+outputFolder="${outputFolder%/}"
 
 isVideoExt() {
   local ext
@@ -59,7 +76,9 @@ isVideoExt() {
 
 buildBlankCell() {
   local out="$1"
-  ffmpeg -y -v error -f lavfi -i "color=${bgColor}:s=${cellWidth}x${cellHeight}" -frames:v 1 "$out"
+  ffmpeg -y -v error -f lavfi -i "color=${bgColor}:s=${cellWidth}x${cellHeight}" -frames:v 1 \
+    -vf "pad=${tileWidth}:${tileHeight}:${borderWidth}:${borderWidth}:color=${borderColor}" \
+    "$out"
 }
 
 extractThumb() {
@@ -76,14 +95,17 @@ extractThumb() {
   half=$(awk -v d="$duration" 'BEGIN { printf "%.2f", d / 2 }')
 
   ffmpeg -y -v error -ss "$half" -i "$fspec" -frames:v 1 \
-    -vf "scale=${cellWidth}:${cellHeight}:force_original_aspect_ratio=decrease,pad=${cellWidth}:${cellHeight}:(ow-iw)/2:(oh-ih)/2:color=${bgColor}" \
+    -vf "scale=${cellWidth}:${cellHeight}:force_original_aspect_ratio=decrease,pad=${cellWidth}:${cellHeight}:(ow-iw)/2:(oh-ih)/2:color=${bgColor},pad=${tileWidth}:${tileHeight}:${borderWidth}:${borderWidth}:color=${borderColor}" \
     "$out"
 }
 
 processDir() {
   local dir="$1"
-  local targetDir="${outputFolder}${dir:${#inputFolder}}"
-  mkdir -p "$targetDir"
+  local writeDir="$dir"
+  if [[ -n "$outputFolder" ]]; then
+    writeDir="${outputFolder}${dir:${#inputFolder}}"
+    mkdir -p "$writeDir"
+  fi
 
   local files=()
   while IFS= read -r -d '' f; do
@@ -104,7 +126,7 @@ processDir() {
     return
   fi
 
-  echo "Building contact sheet for: $dir ($count video(s))"
+  echo "Building overview for: $dir ($count video(s))"
 
   local tmpDir
   tmpDir=$(mktemp -d)
@@ -144,7 +166,7 @@ processDir() {
     done
   fi
 
-  local outFile="$targetDir/_contactsheet.jpg"
+  local outFile="$writeDir/_overview.jpg"
 
   if (( totalCells == 1 )); then
     cp "${thumbs[0]}" "$outFile"
@@ -160,8 +182,8 @@ processDir() {
     for (( idx=0; idx<totalCells; idx++ )); do
       col=$(( idx % effectiveColumns ))
       row=$(( idx / effectiveColumns ))
-      x=$(( col * cellWidth ))
-      y=$(( row * cellHeight ))
+      x=$(( col * tileWidth ))
+      y=$(( row * tileHeight ))
       layout="${layout}${x}_${y}"
       if (( idx < totalCells - 1 )); then
         layout="${layout}|"

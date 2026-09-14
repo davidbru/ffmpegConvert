@@ -64,21 +64,31 @@ ffmpeg -hide_banner -encoders | grep -i hap   # -> hap    Vidvox Hap
 If you ever switch to a different ffmpeg source, re-run this check — not all
 builds include `dxv` (it's a proprietary Resolume codec).
 
-## 3. Previewing DXV/Hap folders: contact sheets, not per-file thumbnails
+## 3. Previewing DXV/Hap folders: overview images, not per-file thumbnails
 
 `convertToDXV.sh`, `convertToHap.sh`, and `convertToWide.sh` used to each
 generate a `__thumbs_mov` subfolder with a per-video H.264 preview file.
-That's been removed — instead, use `../contactsheet/createContactSheet.sh`
-to generate one `_contactsheet.jpg` overview image per folder (a grid of
-one frame from each video in it), viewable directly in Explorer/Finder
-without decoding DXV/Hap at all:
+That's been removed — instead, use `../overview/createOverview.sh` to
+generate one `_overview.jpg` image per folder (a grid of one
+frame from each video in it, separated by a white border) — viewable in
+Explorer/Finder without decoding DXV/Hap at all:
 
 ```bash
-../contactsheet/createContactSheet.sh --folder /path/to/folder
+# writes the overview directly into --folder
+../overview/createOverview.sh --folder /path/to/folder
+
+# mirrors --folder's structure under --output and writes the overview(s)
+# there instead -- what all the convert/*.sh and speedup.sh scripts do,
+# so the overview lands next to the *converted* output, not the originals
+../overview/createOverview.sh --folder /path/to/source --output /path/to/target
 ```
 
-It recurses the same way the convert scripts do, and writes into a sibling
-`<folder>_contactsheets` directory. See that folder for details.
+Frames are always read from `--folder` (the original source footage), never
+from a DXV/Hap/wide-tiled conversion of it — a screenshot of that wouldn't
+be a meaningful preview.
+
+It recurses the same way the convert scripts do. See that folder for
+details.
 
 `createThumbnail.sh` still has macOS-only hardcoded paths (`/Volumes/...`)
 and predates this change — it generates a single JPEG for one hardcoded
