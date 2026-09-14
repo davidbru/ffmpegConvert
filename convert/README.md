@@ -79,36 +79,33 @@ needs the same treatment.
 
 ## 4. Running a script
 
-From Git Bash, in this folder:
+All scripts take the input folder as a `--folder` argument (no more
+interactive prompt):
 
 ```bash
-bash convertToWide.sh
+bash convertToWide.sh --folder /d/Postfach/vj/_assets/1_dxv
 ```
 
-(or `& "C:\Program Files\Git\bin\bash.exe" .\convertToWide.sh` from
-PowerShell — see the PATH note above.)
+(or `& "C:\Program Files\Git\bin\bash.exe" .\convertToWide.sh --folder D:\Postfach\vj\_assets\1_dxv`
+from PowerShell — see the PATH note above.)
 
-When prompted for the input folder, any of these work:
+`--folder <path>` and `--folder=<path>` both work. Any path style works too:
 
 ```
-D:\Postfach\vj\_assets\1_dxv      (pasted straight from Explorer)
-D:/Postfach/vj/_assets/1_dxv
-/d/Postfach/vj/_assets/1_dxv
+--folder "D:\Postfach\vj\_assets\1_dxv"   (pasted straight from Explorer)
+--folder D:/Postfach/vj/_assets/1_dxv
+--folder /d/Postfach/vj/_assets/1_dxv
 ```
 
-(All scripts' `read` prompts use `-r`, so backslashes in a pasted Windows
-path are kept literally instead of being eaten as escape characters — Git
-Bash's MSYS layer then translates the Windows-style path automatically.)
-
-Unlike on macOS, there's no default path suggestion on Windows — you must
-type/paste the full path each time.
+Quote the path if it contains spaces. `--folder` is required — running a
+script without it prints a usage message and exits (no more default path,
+on macOS or Windows).
 
 Note: `convertToWide.sh`, `convertToDXV.sh`, `convertToH264.sh`, and
-`convertToHap.sh` used to remap `inputFolder` → `outputFolder` via a `sed`
-regex substitution, which broke (`sed: Invalid back reference`) on any
-Windows path containing a backslash followed by a digit (e.g. `...\0_orig\...`).
-This is now done with plain bash substring slicing instead, which has no
-regex/escaping pitfalls and works identically on macOS.
+`convertToHap.sh` remap `inputFolder` → `outputFolder` via plain bash
+substring slicing (not `sed`/regex), so paths with special characters
+(including backslashes followed by a digit, e.g. `...\0_orig\...`, which
+previously crashed `sed` with `Invalid back reference`) are handled safely.
 
 ## Why Git Bash, not WSL
 

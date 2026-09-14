@@ -1,7 +1,31 @@
 #!/bin/bash
 
-read -p "Pfad zum zu kontrollierenden Ordner: [/Users/david/Desktop/vj_test/ToConvert] " inputFolder
-inputFolder=${inputFolder:-"/Users/david/Desktop/vj_test/ToConvert"}
+# Usage: ./videoDurations.sh --folder /path/to/folder
+
+# Parse --folder argument
+inputFolder=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --folder)
+      inputFolder="$2"
+      shift 2
+      ;;
+    --folder=*)
+      inputFolder="${1#*=}"
+      shift
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      echo "Usage: $0 --folder /path/to/folder" >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [[ -z "$inputFolder" ]]; then
+  echo "Usage: $0 --folder /path/to/folder" >&2
+  exit 1
+fi
 inputFolder="${inputFolder%/}"  # Remove trailing slash if present
 
 # Define allowed video file extensions correctly

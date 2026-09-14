@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Usage: ./convertToWide.sh --folder /path/to/folder
+
 targetWidth=11392
 targetHeight=512
 
@@ -85,16 +87,30 @@ addToFinalCommand() {
   finalCommand="$finalCommand ffmpeg -i $fileOrig -filter_complex \"${filter}\" -map \"[out]\" -an -c:v dxv -r 30 $fileTarget; "
 }
 
-# Catch trailing slash from user input
-if [[ "$(uname -s)" == "Darwin" ]]; then
-  read -rp "Pfad zum zu konvertierenden Ordner: [/Users/david/Desktop/vj/_assets/1_dxv] " inputFolder
-  inputFolder=${inputFolder:-"/Users/david/Desktop/vj/_assets/1_dxv"}
-else
-  read -rp "Pfad zum zu konvertierenden Ordner: " inputFolder
-fi
-while [[ -z "$inputFolder" ]]; do
-  read -rp "Pfad zum zu konvertierenden Ordner: " inputFolder
+# Parse --folder argument
+inputFolder=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --folder)
+      inputFolder="$2"
+      shift 2
+      ;;
+    --folder=*)
+      inputFolder="${1#*=}"
+      shift
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      echo "Usage: $0 --folder /path/to/folder" >&2
+      exit 1
+      ;;
+  esac
 done
+
+if [[ -z "$inputFolder" ]]; then
+  echo "Usage: $0 --folder /path/to/folder" >&2
+  exit 1
+fi
 inputFolder="${inputFolder%/}"  # Remove trailing slash if present
 
 echo "$inputFolder"

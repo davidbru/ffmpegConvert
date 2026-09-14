@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Usage: ./DXV_tag_problematic_widths.sh --folder /path/to/folder
 
 # DXV videos are broken if the width is not dividable through 16
 # check all provided video files (not only DXV), whether they are ok or not
@@ -87,16 +88,30 @@ processFile() {
   fi
 }
 
-# Get input folder
-if [[ "$(uname -s)" == "Darwin" ]]; then
-  read -rp "Pfad zum zu kontrollierenden Ordner: [/Users/david/Desktop/vj_test/ToConvert] " inputFolder
-  inputFolder=${inputFolder:-"/Users/david/Desktop/vj_test/ToConvert"}
-else
-  read -rp "Pfad zum zu kontrollierenden Ordner: " inputFolder
-fi
-while [[ -z "$inputFolder" ]]; do
-  read -rp "Pfad zum zu kontrollierenden Ordner: " inputFolder
+# Parse --folder argument
+inputFolder=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --folder)
+      inputFolder="$2"
+      shift 2
+      ;;
+    --folder=*)
+      inputFolder="${1#*=}"
+      shift
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      echo "Usage: $0 --folder /path/to/folder" >&2
+      exit 1
+      ;;
+  esac
 done
+
+if [[ -z "$inputFolder" ]]; then
+  echo "Usage: $0 --folder /path/to/folder" >&2
+  exit 1
+fi
 inputFolder="${inputFolder%/}"  # Remove trailing slash if present
 stopFolder=$(basename "$inputFolder")  # Define the stopping folder
 
