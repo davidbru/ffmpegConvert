@@ -18,9 +18,11 @@
 # ffmpeg -i inputFile.mkv -an -c:v hap -vf "scale='min(1280,iw)':-1" -b:v 12M -ss 00:05:44 -t 00:00:33 outputFile.mov
 
 finalCommand=""
+currentFileIndex=0
+totalFiles=0
 
 addToFinalCommand() {
-  echo "addToFinalCommand $1"
+  currentFileIndex=$((currentFileIndex + 1))
 
   export fspec=$1
   fnameWithExt=$(basename "$fspec")
@@ -42,7 +44,8 @@ addToFinalCommand() {
     # escape special characters
     printf -v fileTarget "%q" "$fileTargetFolder/$fnameWithoutExt.mov"
 
-    finalCommand="$finalCommand ffmpeg -i $fileOrig -an -c:v hap -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/4)*4:trunc(ih/4)*4, fps=30\" $fileTarget; "
+    printf -v fnameDisplay "%q" "$fnameWithExt"
+    finalCommand="$finalCommand printf '\n\033[1;92m[%s/%s] Converting: %s\033[0m\n' \"${currentFileIndex}\" \"${totalFiles}\" $fnameDisplay; ffmpeg -i $fileOrig -an -c:v hap -vf \"scale=min(1920\,iw):-2,scale=trunc(iw/4)*4:trunc(ih/4)*4, fps=30\" $fileTarget; "
   else
     #-------------------#
     # ELSE JUST COPY IT #
@@ -51,7 +54,8 @@ addToFinalCommand() {
     # escape special characters
     printf -v fileTarget "%q" "$fileTargetFolder/$fnameWithExt"
 
-    finalCommand="$finalCommand cp $fileOrig $fileTarget; "
+    printf -v fnameDisplay "%q" "$fnameWithExt"
+    finalCommand="$finalCommand printf '\n\033[1;92m[%s/%s] Copying: %s\033[0m\n' \"${currentFileIndex}\" \"${totalFiles}\" $fnameDisplay; cp $fileOrig $fileTarget; "
   fi
 }
 
@@ -93,11 +97,18 @@ find "$inputFolder" -type d | while read -r dir; do
   mkdir -p "$targetDir"
 done
 
-# Process files (skip __thumbs_mov folders left over from before thumbnail
-# generation moved to createOverview.sh)
+# Collect files first (skip __thumbs_mov folders left over from before
+# thumbnail generation moved to createOverview.sh) so we know the total
+# count for progress reporting
+videoFiles=()
 while IFS= read -r -d '' file; do
-  addToFinalCommand "$file"
+  videoFiles+=("$file")
 done < <(find "$inputFolder" -type f -print0 | grep -zv "__thumbs_mov")
+
+totalFiles=${#videoFiles[@]}
+for file in "${videoFiles[@]}"; do
+  addToFinalCommand "$file"
+done
 
 #echo "$finalCommand"
 eval "$finalCommand"

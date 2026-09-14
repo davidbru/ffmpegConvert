@@ -6,9 +6,12 @@ targetWidth=11392
 targetHeight=512
 
 finalCommand=""
+currentFileIndex=0
+totalFiles=0
 
 addToFinalCommand() {
   local fspec="$1"
+  currentFileIndex=$((currentFileIndex + 1))
   local fnameWithExt
   fnameWithExt=$(basename "$fspec")
   local folderToOrig
@@ -87,7 +90,9 @@ addToFinalCommand() {
   filter="${filter}[wide]crop=${targetWidth}:${targetHeight}:${crop_x}:0[co];"
   filter="${filter}[co]fps=30,setsar=1[out]"
 
-  finalCommand="$finalCommand ffmpeg -i $fileOrig -filter_complex \"${filter}\" -map \"[out]\" -an -c:v dxv -r 30 $fileTarget; "
+  local fnameDisplay
+  printf -v fnameDisplay "%q" "$fnameWithExt"
+  finalCommand="$finalCommand printf '\n\033[1;92m[%s/%s] Converting: %s\033[0m\n' \"${currentFileIndex}\" \"${totalFiles}\" $fnameDisplay; ffmpeg -i $fileOrig -filter_complex \"${filter}\" -map \"[out]\" -an -c:v dxv -r 30 $fileTarget; "
 }
 
 # Parse --folder argument
@@ -128,15 +133,22 @@ while IFS= read -r dir; do
   mkdir -p "$targetDir"
 done < <(find "$inputFolder" -type d)
 
-# Process video files (skip __thumbs_mov folders)
+# Collect matching video files first so we know the total count for
+# progress reporting
+videoFiles=()
 while IFS= read -r -d '' file; do
   ext="${file##*.}"
   ext="$(echo "$ext" | tr '[:upper:]' '[:lower:]')"
   if [[ "$ext" == "mov" || "$ext" == "mkv" || "$ext" == "mp4" || \
         "$ext" == "avi" || "$ext" == "gif" || "$ext" == "webm" ]]; then
-    addToFinalCommand "$file"
+    videoFiles+=("$file")
   fi
 done < <(find "$inputFolder" -type f -print0 | grep -zv "__thumbs_mov")
+
+totalFiles=${#videoFiles[@]}
+for file in "${videoFiles[@]}"; do
+  addToFinalCommand "$file"
+done
 
 eval "$finalCommand"
 

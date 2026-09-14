@@ -34,29 +34,27 @@ inputFolder="${inputFolder%/}"  # Remove trailing slash if present
 outputFolder="${inputFolder}_Fast"
 mkdir -p "$outputFolder"
 
+# Collect files first so we know the total count for progress reporting
+videoFiles=()
+for filename in "$inputFolder"/*; do
+  [[ -f "$filename" ]] && videoFiles+=("$filename")
+done
+totalFiles=${#videoFiles[@]}
+currentFileIndex=0
+
 # Initialize an empty variable to hold all ffmpeg commands
 commands=""
 
 # Process all files in the input folder
-for filename in "$inputFolder"/*; do
-  # Get only the filename without the path
-  filename=$(basename "$filename")
-  
-  echo "Processing: $filename"
+for input_path in "${videoFiles[@]}"; do
+  filename=$(basename "$input_path")
+  currentFileIndex=$((currentFileIndex + 1))
 
-  input_path="$inputFolder/$filename"
   output_path="$outputFolder/$filename"
 
-  echo "  Input path: $input_path"
-  echo "  Output path: $output_path"
-
-  if [[ ! -f "$input_path" ]]; then
-    echo "  ⚠️  Skipping: File not found."
-    continue
-  fi
-
   # Build the ffmpeg command and append it to the `commands` variable
-  ffmpeg_cmd="ffmpeg -y -loglevel error -i \"$input_path\" -filter:v \"setpts=PTS/$speedupFactor\" -an -c:v libx264 -preset fast -crf 23 \"$output_path\""
+  printf -v fnameDisplay "%q" "$filename"
+  ffmpeg_cmd="printf '\n\033[1;92m[%s/%s] Converting: %s\033[0m\n' \"${currentFileIndex}\" \"${totalFiles}\" $fnameDisplay; ffmpeg -y -loglevel error -i \"$input_path\" -filter:v \"setpts=PTS/$speedupFactor\" -an -c:v libx264 -preset fast -crf 23 \"$output_path\""
   commands+="$ffmpeg_cmd; "
 
 done
